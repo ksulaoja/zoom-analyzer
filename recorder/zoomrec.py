@@ -38,7 +38,7 @@ MEETING_PASSWORD = os.getenv('MEETING_PASSWORD')
 MEETING_DURATION = os.getenv('MEETING_DURATION') # in minutes
 
 MEETING_INTERNAL_ID = os.getenv('MEETING_INTERNAL_ID', "-1")
-SCHEDULER_STATUS_URL = os.getenv("SCHEDULER_STATUS_URL", "http://localhost:8000/recordings/status")
+SCHEDULER_STATUS_URL = os.getenv("SCHEDULER_STATUS_URL", "http://localhost:8080/recorder/status")
 
 DISPLAY_NAME = os.getenv('DISPLAY_NAME', "Recording bot on behalf of participant")
 
@@ -207,7 +207,7 @@ def send_status_to_scheduler(text: str, statusType: StatusType):
     global SCHEDULER_STATUS_URL
     global MEETING_INTERNAL_ID
 
-    body = {"meetingId": int(MEETING_INTERNAL_ID), "type": statusType.value, "message": text}
+    body = {"meetingId": int(MEETING_INTERNAL_ID), "type": statusType.name, "message": text}
     try:
         response = requests.post(SCHEDULER_STATUS_URL, json=body)
         if response.status_code == 200:
