@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>ee.taltech</groupId>
-	<artifactId>zoomalyzer</artifactId>
+	<artifactId>scheduler</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>zoomalyzer</name>
 	<description>Zoom call analyzer</description>
