@@ -16,6 +16,11 @@ public class RecordingService {
         return recordingDal.findAll();
     }
 
+    public Recording findById(Long id) {
+        // TODO entity not found
+        return recordingDal.findById(id).orElseThrow();
+    }
+
     public Recording save(Recording recording) {
         if (recording.getId() != null && recordingDal.findById(recording.getId()).isPresent()) {
             throw new RuntimeException("Recording exists");
