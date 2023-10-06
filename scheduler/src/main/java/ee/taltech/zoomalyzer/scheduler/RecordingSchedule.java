@@ -23,7 +23,6 @@ public class RecordingSchedule {
 
     @Scheduled(fixedRate = 10000) // change to 10min
     public void checkSchedule() {
-        logger.info("Checking schedule");
         Instant now = Instant.now();
         List<Recording> upcoming = recordingDal.findByStartTimeGreaterThanAndFilePathIsNullAndScheduledIsFalse(now);
 
@@ -43,5 +42,9 @@ public class RecordingSchedule {
     private void startRecording(Recording recording) {
         logger.info(String.format("Start docker container to record: %s", recording));
         // TODO start recording in docker
+        // TODO if status of startup not sent, stop container
+        // TODO if status of recording not sent, stop container
+        // TODO if status is failed, stop container
+        // if no status updates, check log file /recordings/screenshots/recording-{recording_id}.log
     }
 }

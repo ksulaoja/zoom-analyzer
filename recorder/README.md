@@ -13,7 +13,7 @@ docker build -t zoomalyzer-recorder .
 #### Run container
 Replace with your own meetingId/url and password. If URL is present, passcode is ignored.
 ````
-    docker run -d -e MEETING_ID=https://us05web.zoom.us/j/86068310413?pwd=9tshaIjkM8Xpy52SyOa7n31DLxsLnR.1 -e MEETING_PASSWORD=pass -e MEETING_DURATION=3 -v %cd%\recordings:/home/zoomrec/recordings -p 5901:5901 -e DEBUG=True --security-opt seccomp:unconfined zoomalyzer-recorder
+docker run -d -e MEETING_ID=https://us05web.zoom.us/j/86068310413?pwd=9tshaIjkM8Xpy52SyOa7n31DLxsLnR.1 -e MEETING_PASSWORD=pass -e MEETING_DURATION=3 -e RECORDING_ID=1 -v %cd%\recordings:/home/zoomrec/recordings -p 5901:5901 -e DEBUG=True --security-opt seccomp:unconfined zoomalyzer-recorder
 ````
 
 
@@ -40,11 +40,13 @@ Recording location ``%cd%\recordings:/home/zoomrec/recordings``
 
 **MEETING_DURATION** - recording duration in minutes
 
-**DISPLAY_NAME** - bot display name during Zoom call
+**RECORDING_ID** - recording ID
 
-**MEETING_INTERNAL_ID** - meeting's internal ID in scheduler application database
+**DISPLAY_NAME** - bot display name during Zoom call, default `Recording bot on behalf of participant`
 
-**SCHEDULER_STATUS_URL** - endpoint to where bot sends status updates
+**SCHEDULER_LOGGING_URL** - endpoint to where bot sends status updates, default `http://host.docker.internal:8080/log/recorder`
+
+**MAX_CONNECTING_DURATION** - max time to connect to meeting (including waiting room) in minutes
 
 **DEBUG** - doesn't stop container if error occurs,
 records joining process as separate file, saves screenshots of errors to `/recordings/screenshots`

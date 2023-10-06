@@ -1,5 +1,6 @@
 package ee.taltech.zoomalyzer.entities;
 
+import ee.taltech.zoomalyzer.util.TimeUtils;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -120,7 +121,7 @@ public class Recording {
                 ", meetingId='" + meetingId + '\'' +
                 ", meetingUrl='" + meetingUrl + '\'' +
                 ", meetingPw='" + meetingPw + '\'' +
-                ", startTime=" + startTime +
+                ", startTime=" + TimeUtils.toIso8601(startTime) +
                 ", recordingLength=" + recordingLength +
                 ", userEmail='" + userEmail + '\'' +
                 '}';

@@ -1,6 +1,5 @@
 import logging
 import os
-from enum import Enum
 
 import psutil
 import pyautogui
@@ -14,9 +13,6 @@ from datetime import datetime, timedelta
 
 global ONGOING_MEETING
 global SCREENSHARING_SPEAKER_VIEW
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 # Turn DEBUG on:
 #   - screenshot on error
@@ -37,15 +33,32 @@ MEETING_ID = os.getenv('MEETING_ID')
 MEETING_PASSWORD = os.getenv('MEETING_PASSWORD')
 MEETING_DURATION = os.getenv('MEETING_DURATION') # in minutes
 
-MEETING_INTERNAL_ID = os.getenv('MEETING_INTERNAL_ID', "-1")
-SCHEDULER_STATUS_URL = os.getenv("SCHEDULER_STATUS_URL", "http://localhost:8080/recorder/status")
+RECORDING_ID = os.getenv('RECORDING_ID', -1)
+SCHEDULER_LOGGING_URL = os.getenv("SCHEDULER_LOGGING_URL", "http://host.docker.internal:8080/log/recorder")
 
 DISPLAY_NAME = os.getenv('DISPLAY_NAME', "Recording bot on behalf of participant")
+MAX_CONNECTING_DURATION = os.getenv('MAX_CONNECTING_DURATION', 15)
 
+#TODO change timezone
+# Configure logging to scheduler
+class SchedulerLogHandler(logging.Handler):
+    def emit(self, record):
+        log_entry = self.format(record)
+        if record.levelname != "CRITICAL":
+            body = {"recordingId": int(RECORDING_ID), "logLevel": record.levelname, "message": record.message}
+            try:
+                requests.post(SCHEDULER_LOGGING_URL, json=body)
+            except BaseException as e:
+                logging.critical(e)
 
-class StatusType(Enum):
-    OK = "OK"
-    FAIL = "FAIL"
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO,
+    filename=os.path.join(DEBUG_PATH, "recording") + str(RECORDING_ID) + ".log", filemode='w')
+log_handler = SchedulerLogHandler()
+logging.getLogger().addHandler(log_handler)
+STATUS_LEVEL = 51
+logging.addLevelName(STATUS_LEVEL, "STATUS")
+
 
 
 TIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
@@ -76,21 +89,21 @@ class BackgroundThread:
             # Check if recording
             if (pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'meeting_is_being_recorded.png'), confidence=0.9,
                                                minSearchTime=2) is not None):
-                logging.info("This meeting is being recorded..")
+                logging.info("This meeting is being recorded by other participants")
                 try:
                     x, y = pyautogui.locateCenterOnScreen(os.path.join(
                         IMG_PATH, 'got_it.png'), confidence=0.9)
                     pyautogui.click(x, y)
                     logging.info("Accepted recording..")
                 except TypeError:
-                    logging.error("Could not accept recording!")
+                    logging.error("Could not accept 'this meeting is being recorded'!")
 
             # Check if ended
             if (pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_ended_by_host_1.png'),
                                          confidence=0.9) is not None or pyautogui.locateOnScreen(
                 os.path.join(IMG_PATH, 'meeting_ended_by_host_2.png'), confidence=0.9) is not None):
                 ONGOING_MEETING = False
-                logging.info("Meeting ended by host..")
+                logging.info("Meeting ended by host")
             time.sleep(self.interval)
 
 
@@ -109,9 +122,9 @@ class HideViewOptionsThread:
         logging.debug("Check continuously if screensharing is active..")
         while ONGOING_MEETING:
             # TODO check if host asked to unmute
+            # TODO check if host kicked / put back to waiting room
             # TODO sharing screen is not always fullscreen
-            # TODO meeting duration exceeds by 4min
-            # TODO quit container after duration
+
             # Check if host is sharing poll results
             if (pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'host_is_sharing_poll_results.png'),
                                                confidence=0.9,
@@ -140,7 +153,7 @@ class HideViewOptionsThread:
             # Close chat
             if pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_chat_popup.png'), confidence=0.9) is not None:
                 # Popup chat
-                logging.info("Meeting chat popup window active")
+                logging.info("Meeting chat popup window active, closing it")
                 try:
                     x, y = pyautogui.locateCenterOnScreen(os.path.join(
                         IMG_PATH, 'meeting_chat_popup.png'), confidence=0.9)
@@ -153,19 +166,13 @@ class HideViewOptionsThread:
 
             elif (pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_chat.png'), confidence=0.9) is not None):
                 # Side chat
-                logging.info("Meeting chat side window active")
+                logging.info("Meeting chat side window active, closing it")
                 try:
                     x, y = pyautogui.locateCenterOnScreen(os.path.join(
                         IMG_PATH, 'meeting_chat.png'), confidence=0.9)
                     pyautogui.click(x - 105, y) # click options button on the left 105px
                     time.sleep(1)
                     pyautogui.click(x - 105 + 20, y + 20) # close button
-                    try:
-                        x, y = pyautogui.locateCenterOnScreen(os.path.join(
-                            IMG_PATH, 'chat_close.png'), confidence=0.9)
-                        pyautogui.click(x, y)
-                    except TypeError:
-                        logging.error("Could not close chat!")
                 except TypeError:
                     logging.error("Could not find chat options!")
 
@@ -174,7 +181,7 @@ class HideViewOptionsThread:
                 if not SCREENSHARING_SPEAKER_VIEW:
                     logging.info("Screensharing active..")
                     if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'side_by_side_separator.png'), confidence=0.9) is None:
-                        logging.info("Could not find side by side separator")
+                        logging.info("Changing screensharing view")
                         show_toolbars()
                         try:
                             x, y = pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'view.png'), confidence=0.9)
@@ -196,27 +203,12 @@ class HideViewOptionsThread:
                         and
                         pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'zoom_exit_btn.png'), confidence=0.9) is None
                 ):
-                    logging.info("Window is not fit to screen, double clicking title")
+                    logging.info("Window is not fit to screen, resizing")
                     pyautogui.keyDown('alt')
                     pyautogui.press('f10')
                     pyautogui.keyUp('alt')
 
             time.sleep(self.interval)
-
-def send_status_to_scheduler(text: str, statusType: StatusType):
-    global SCHEDULER_STATUS_URL
-    global MEETING_INTERNAL_ID
-
-    body = {"meetingId": int(MEETING_INTERNAL_ID), "type": statusType.name, "message": text}
-    try:
-        response = requests.post(SCHEDULER_STATUS_URL, json=body)
-        if response.status_code == 200:
-            logging.info("Sent status to scheduler: " + str(body))
-        else:
-            logging.error("Failed to send status to scheduler: RESPONSE " + str(response.status_code) + " " + str(body))
-    except BaseException as e:
-        logging.error(e)
-
        
 def check_connecting(zoom_pid, start_date, duration):
     # Check if connecting
@@ -228,26 +220,26 @@ def check_connecting(zoom_pid, start_date, duration):
         logging.info("Connecting..")
 
     # Wait while connecting
-    # Exit when connecting takes more than the duration
+    # Exit when connecting takes more time than allowed
     while connecting:
         if (datetime.now() - start_date).total_seconds() > duration:
-            logging.info("Meeting ended after time!")
+            logging.info("Connecting to meeting has taken more time than " + str(duration / 60) + " minutes")
             logging.info("Exit Zoom!")
             os.killpg(os.getpgid(zoom_pid), signal.SIGQUIT)
             return
 
         if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'connecting.png'), confidence=0.9) is None:
-            logging.info("Maybe not connecting anymore..")
+            logging.info("Possibly not connecting anymore")
             check_periods += 1
             if check_periods >= 2:
                 connecting = False
-                logging.info("Not connecting anymore..")
+                logging.info("Not connecting anymore")
                 return
         time.sleep(2)
 
 
 def join_meeting_id(meet_id):
-    logging.info("Join a meeting by ID..")
+    logging.info("Join a meeting by ID")
     found_join_meeting = False
     try:
         x, y = pyautogui.locateCenterOnScreen(os.path.join(
@@ -290,7 +282,7 @@ def join_meeting_id(meet_id):
 
 
 def join_meeting_url():
-    logging.info("Join a meeting by URL..")
+    logging.info("Join a meeting by URL")
 
     # Insert name
     pyautogui.hotkey('ctrl', 'a')
@@ -313,7 +305,7 @@ def check_error():
     # Sometimes invalid id error is displayed
     if pyautogui.locateCenterOnScreen(os.path.join(
             IMG_PATH, 'invalid_meeting_id.png'), confidence=0.9) is not None:
-        logging.error("Maybe a invalid meeting id was inserted..")
+        logging.error("Invalid meeting id window popped up")
         left = False
         try:
             x, y = pyautogui.locateCenterOnScreen(
@@ -321,6 +313,7 @@ def check_error():
             pyautogui.click(x, y)
             left = True
         except TypeError:
+            logging.debug("Could not press 'leave' on invalid meeting id popup, maybe valid id")
             pass
             # Valid id
 
@@ -328,7 +321,7 @@ def check_error():
             if pyautogui.locateCenterOnScreen(os.path.join(
                     IMG_PATH, 'join_meeting.png'), confidence=0.9) is not None:
                 logging.error("Invalid meeting id!")
-                send_status_to_scheduler("Invalid meeting id", StatusType.FAIL)
+                logging.log(STATUS_LEVEL, "FAILED")
                 return False
         else:
             return True
@@ -336,7 +329,7 @@ def check_error():
     if pyautogui.locateCenterOnScreen(os.path.join(
             IMG_PATH, 'authorized_attendees_only.png'), confidence=0.9) is not None:
         logging.error("This meeting is for authorized attendees only!")
-        send_status_to_scheduler("Meeting is for authorized attendees only", StatusType.FAIL)
+        logging.log(STATUS_LEVEL, "FAILED")
         return False
 
     return True
@@ -369,7 +362,7 @@ def join_audio():
     try:
         x, y = pyautogui.locateCenterOnScreen(os.path.join(
             IMG_PATH, 'join_with_computer_audio.png'), confidence=0.9)
-        logging.info("Join with computer audio..")
+        logging.info("Join with computer audio")
         pyautogui.click(x, y)
         audio_joined = True
         return True
@@ -388,6 +381,7 @@ def join_audio():
             join_audio()
         except TypeError:
             logging.error("Could not join audio!")
+            logging.log(STATUS_LEVEL, "FAILED")
             if DEBUG:
                 pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
 
@@ -397,9 +391,11 @@ def join_audio():
 
 def join(meet_id, meet_pw, duration):
     global SCREENSHARING_SPEAKER_VIEW
+    global MAX_CONNECTING_DURATION
+    MAX_CONNECTING_DURATION = int(MAX_CONNECTING_DURATION) * 60  # seconds
     ffmpeg_debug = None
 
-    logging.info("Join meeting: " + meet_id)
+    logging.log(STATUS_LEVEL, "JOINING")
 
     if DEBUG:
         # Start recording
@@ -407,7 +403,7 @@ def join(meet_id, meet_pw, duration):
         resolution = str(width) + 'x' + str(height)
         disp = os.getenv('DISPLAY')
 
-        logging.info("Start recording..")
+        logging.debug("Start recording joining process")
 
         filename = os.path.join(
             REC_PATH, time.strftime(TIME_FORMAT)) + "-JOIN.mkv"
@@ -429,26 +425,42 @@ def join(meet_id, meet_pw, duration):
         # Start Zoom
         zoom = subprocess.Popen("zoom", stdout=subprocess.PIPE,
                                 shell=True, preexec_fn=os.setsid)
-        logging.info("opened zoom")
+        logging.info("Opened zoom")
         img_name = 'join_meeting.png'
     else:
-        logging.info("Starting zoom with url")
+        logging.info("Starting Zoom with url")
         zoom = subprocess.Popen(f'zoom --url="{meet_id}"', stdout=subprocess.PIPE,
                                 shell=True, preexec_fn=os.setsid)
         img_name = 'join.png'
     
     # Wait while zoom process is there
     list_of_process_ids = find_process_id_by_name('zoom')
-    while len(list_of_process_ids) <= 0:
-        logging.info("No Running Zoom Process found!")
+    tries_left = 50
+    while len(list_of_process_ids) <= 0 and tries_left > 0:
+        logging.debug("No Running Zoom Process found!")
         list_of_process_ids = find_process_id_by_name('zoom')
+        tries_left -= 1
         time.sleep(1)
 
-    # Wait for zoom is started
-    while pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, img_name), confidence=0.9) is None:
+    if tries_left == 0:
+        logging.error("Could not start Zoom, Zoom process not found")
+        logging.log(STATUS_LEVEL, "FAILED")
+        os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+        return
+
+    # Wait for Zoom to start up
+    tries_left = 50
+    while pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, img_name), confidence=0.9) is None and tries_left > 0:
         check_error()
-        logging.info("Zoom not ready yet!")
+        logging.debug("Zoom not ready yet!")
+        tries_left -= 1
         time.sleep(1)
+
+    if tries_left == 0:
+        logging.error("Could not start Zoom, join button not found")
+        logging.log(STATUS_LEVEL, "FAILED")
+        os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+        return
 
     logging.info("Zoom started!")
     start_date = datetime.now()
@@ -460,8 +472,8 @@ def join(meet_id, meet_pw, duration):
         joined = join_meeting_url()
 
     if not joined:
-        send_status_to_scheduler("Failed to join meeting {}!".format(meet_id), StatusType.FAIL)
         logging.error("Failed to join meeting!")
+        logging.log(STATUS_LEVEL, "FAILED")
         os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
         if DEBUG and ffmpeg_debug is not None:
             # closing ffmpeg
@@ -470,7 +482,7 @@ def join(meet_id, meet_pw, duration):
         return
 
     # Check if connecting
-    check_connecting(zoom.pid, start_date, duration)
+    check_connecting(zoom.pid, start_date, MAX_CONNECTING_DURATION)
 
     if not join_by_url:
         pyautogui.write(meet_pw, interval=0.2)
@@ -479,7 +491,7 @@ def join(meet_id, meet_pw, duration):
 
     # Joined meeting
     # Check if connecting
-    check_connecting(zoom.pid, start_date, duration)
+    check_connecting(zoom.pid, start_date, MAX_CONNECTING_DURATION)
 
     # Check if meeting is started by host
     check_periods = 0
@@ -491,14 +503,15 @@ def join(meet_id, meet_pw, duration):
     if pyautogui.locateCenterOnScreen(os.path.join(
             IMG_PATH, 'wait_for_host.png'), confidence=0.9, minSearchTime=3) is not None:
         meeting_started = False
-        logging.info("Please wait for the host to start this meeting.")
+        logging.info("Waiting for the host to start this meeting")
 
     # Wait for the host to start this meeting
     # Exit when meeting ends after time
     while not meeting_started:
-        if (datetime.now() - start_date).total_seconds() > duration:
-            logging.info("Meeting ended after duration passed!")
-            logging.info("Exit Zoom!")
+        if (datetime.now() - start_date).total_seconds() > MAX_CONNECTING_DURATION:
+            logging.error("Meeting hasn't started after " + str(MAX_CONNECTING_DURATION / 60)  +" minutes")
+            logging.error("Exit Zoom!")
+            logging.log(STATUS_LEVEL, "FAILED")
             os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
             if DEBUG:
                 os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
@@ -507,7 +520,7 @@ def join(meet_id, meet_pw, duration):
 
         if pyautogui.locateCenterOnScreen(os.path.join(
                 IMG_PATH, 'wait_for_host.png'), confidence=0.9) is None:
-            logging.info("Maybe meeting was started now.")
+            logging.info("Maybe meeting was started by host.")
             check_periods += 1
             if check_periods >= 2:
                 meeting_started = True
@@ -516,7 +529,7 @@ def join(meet_id, meet_pw, duration):
         time.sleep(2)
 
     # Check if connecting
-    check_connecting(zoom.pid, start_date, duration)
+    check_connecting(zoom.pid, start_date, MAX_CONNECTING_DURATION)
 
     # Check if in waiting room
     check_periods = 0
@@ -528,14 +541,15 @@ def join(meet_id, meet_pw, duration):
     if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'waiting_room.png'), confidence=0.9,
                                       minSearchTime=3) is not None:
         in_waitingroom = True
-        logging.info("Please wait, the meeting host will let you in soon..")
+        logging.info("Waiting for the host to admit bot to meeting")
 
     # Wait while host will let you in
-    # Exit when meeting ends after duration
+    # Exit when connecting time is too long
     while in_waitingroom:
-        if (datetime.now() - start_date).total_seconds() > duration:
-            logging.info("Meeting ended after recording duration passed!")
-            logging.info("Exit Zoom!")
+        if (datetime.now() - start_date).total_seconds() > MAX_CONNECTING_DURATION:
+            logging.error("Host did not admit the bot to meeting in 10 minutes")
+            logging.error("Exit Zoom!")
+            logging.log(STATUS_LEVEL, "FAILED")
             os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
             if DEBUG:
                 os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
@@ -553,19 +567,19 @@ def join(meet_id, meet_pw, duration):
 
     # Meeting joined
     # Check if connecting
-    check_connecting(zoom.pid, start_date, duration)
+    check_connecting(zoom.pid, start_date, MAX_CONNECTING_DURATION)
 
-    logging.info("Joined meeting..")
+    logging.info("Joined meeting")
 
     # Check if recording warning is shown at the beginning
     if (pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'meeting_is_being_recorded.png'), confidence=0.9,
                                        minSearchTime=2) is not None):
-        logging.info("This meeting is being recorded..")
+        logging.info("This meeting is being recorded by other participants")
         try:
             x, y = pyautogui.locateCenterOnScreen(os.path.join(
                 IMG_PATH, 'got_it.png'), confidence=0.9)
             pyautogui.click(x, y)
-            logging.info("Accepted recording..")
+            logging.info("Accepted recording")
             time.sleep(1)
         except TypeError:
             logging.error("Could not accept recording!")
@@ -576,7 +590,7 @@ def join(meet_id, meet_pw, duration):
 
     # Set computer audio
     if not join_audio():
-        logging.info("Exit!")
+        logging.info("Audio not joined, trying again from the beginning!")
         os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
         if DEBUG:
             os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
@@ -586,14 +600,14 @@ def join(meet_id, meet_pw, duration):
     time.sleep(1)
 
 
-    logging.info("Switch view..")
+    logging.info("Switch to speaker view")
     try:
         show_toolbars()
         x, y = pyautogui.locateCenterOnScreen(
         os.path.join(IMG_PATH, 'view.png'), confidence=0.9)
         pyautogui.click(x, y)
     except TypeError:
-        logging.error("Could not find view!")
+        logging.error("Could not find view button!")
         if DEBUG:
             pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                 TIME_FORMAT)) + "_view_error.png")
@@ -606,10 +620,16 @@ def join(meet_id, meet_pw, duration):
             IMG_PATH, 'speaker_view.png'), confidence=0.9)
         pyautogui.click(x, y)
     except TypeError:
-        logging.error("Could not switch speaker view!")
-        if DEBUG:
-            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                TIME_FORMAT)) + "_speaker_view_error.png")
+        logging.debug("Could not find speaker view button, trying side-by-side: speaker view")
+        try:
+            x, y = pyautogui.locateCenterOnScreen(os.path.join(
+                IMG_PATH, 'side_by_side_speaker.png'), confidence=0.9)
+            pyautogui.click(x, y)
+        except TypeError:
+            logging.error("Could not change to speaker nor side-by-side speaker view")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT)) + "_speaker_view_error.png")
 
 
     # Move mouse from screen
@@ -622,7 +642,8 @@ def join(meet_id, meet_pw, duration):
 
     # Audio
     # Start recording
-    logging.info("Start recording..")
+    logging.info("Start recording. Duration " + str(duration/60) + " minutes")
+    logging.log(STATUS_LEVEL, "RECORDING")
 
     filename = os.path.join(REC_PATH, time.strftime(
         TIME_FORMAT)) + ".mkv"
@@ -641,23 +662,25 @@ def join(meet_id, meet_pw, duration):
         ffmpeg.pid), signal.SIGQUIT)
 
     start_date = datetime.now()
-    end_date = start_date + timedelta(seconds=duration + 120)  # Add 3+2 minutes
-
+    end_date = start_date + timedelta(seconds=duration + 120)  # Add 2 minutes for error
     # Start thread to check active screensharing
     HideViewOptionsThread()
-
-    send_status_to_scheduler("Joined Meeting '{}' and started recording.".format(meet_id), StatusType.OK)
     
     meeting_running = True
     while meeting_running:
         time_remaining = end_date - datetime.now()
         if time_remaining.total_seconds() < 0 or not ONGOING_MEETING:
+            if ONGOING_MEETING:
+                logging.info(str(duration /60) + " minutes recorded, ending")
             meeting_running = False
         else:
             print(f"Meeting ends in {time_remaining}", end="\r", flush=True)
         time.sleep(5)
 
-    logging.info("Meeting ends at %s" % datetime.now())
+    logging.info("Meeting ended")
+    logging.debug("Shutting down container")
+    logging.log(STATUS_LEVEL, "ENDED")
+
 
     # Close everything
     if DEBUG and ffmpeg_debug is not None:
@@ -667,20 +690,6 @@ def join(meet_id, meet_pw, duration):
     os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
     os.killpg(os.getpgid(ffmpeg.pid), signal.SIGQUIT)
     atexit.unregister(os.killpg)
-
-    if not ONGOING_MEETING:
-        # TODO host ends meeting should not set status to error
-        try:
-            # Press OK after meeting ended by host
-            x, y = pyautogui.locateCenterOnScreen(
-                os.path.join(IMG_PATH, 'ok.png'), confidence=0.9)
-            pyautogui.click(x, y)
-        except TypeError:
-            if DEBUG:
-                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                    TIME_FORMAT)) + "_ok_error.png")
-                
-    send_status_to_scheduler("Meeting '{}' ended.".format(meet_id), StatusType.OK)
 
 
 def exit_process_by_name(name):
@@ -696,25 +705,23 @@ def exit_process_by_name(name):
                               "[" + str(process_id) + "]: " + str(ex))
 
 
-def join_ongoing_meeting():
-    global MEETING_ID
-    global MEETING_PASSWORD
-    global MEETING_DURATION
-
-    logging.info(
-        "Join meeting that is currently running..")
-    join(meet_id=MEETING_ID, meet_pw=MEETING_PASSWORD,
-         duration=int(MEETING_DURATION) * 60 + 180)
-
-
 def main():
+    logging.log(STATUS_LEVEL, "STARTUP")
     try:
         if DEBUG and not os.path.exists(DEBUG_PATH):
             os.makedirs(DEBUG_PATH)
     except Exception:
         logging.error("Failed to create screenshot folder!")
         raise
-    join_ongoing_meeting()
+
+    global MEETING_ID
+    global MEETING_PASSWORD
+    global MEETING_DURATION
+    try:
+        join(meet_id=MEETING_ID, meet_pw=MEETING_PASSWORD,
+            duration=int(MEETING_DURATION) * 60 + 60)
+    except Exception as e:
+        logging.error("Process stopped: " + str(e))
 
 
 if __name__ == '__main__':
