@@ -53,7 +53,7 @@ class SchedulerLogHandler(logging.Handler):
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO,
-    filename=os.path.join(DEBUG_PATH, "recording") + str(RECORDING_ID) + ".log", filemode='w')
+    filename=os.path.join(DEBUG_PATH, "recording-") + str(RECORDING_ID) + ".log", filemode='w')
 log_handler = SchedulerLogHandler()
 logging.getLogger().addHandler(log_handler)
 STATUS_LEVEL = 51
@@ -406,7 +406,7 @@ def join(meet_id, meet_pw, duration):
         logging.debug("Start recording joining process")
 
         filename = os.path.join(
-            REC_PATH, time.strftime(TIME_FORMAT)) + "-JOIN.mkv"
+            REC_PATH, "recording-") + RECORDING_ID + "-join.mkv"
 
         command = "ffmpeg -nostats -loglevel quiet -f pulse -ac 2 -i 1 -f x11grab -r 30 -s " + resolution + " -i " + \
                   disp + " -acodec pcm_s16le -vcodec libx264rgb -preset ultrafast -crf 0 -threads 0 -async 1 -vsync 1 " + filename
@@ -645,8 +645,7 @@ def join(meet_id, meet_pw, duration):
     logging.info("Start recording. Duration " + str(duration/60) + " minutes")
     logging.log(STATUS_LEVEL, "RECORDING")
 
-    filename = os.path.join(REC_PATH, time.strftime(
-        TIME_FORMAT)) + ".mkv"
+    filename = os.path.join(REC_PATH, "recording-") + RECORDING_ID + ".mkv"
 
     width, height = pyautogui.size()
     resolution = str(width) + 'x' + str(height)
