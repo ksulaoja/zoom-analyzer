@@ -75,7 +75,7 @@ public class RecordingController {
     }
 
     private static String generateFileName(Recording recording) {
-        return String.format("meeting-%s.mkv", TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"));
+        return String.format("meeting-%s-%s.mkv", recording.getId(), TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"));
     }
 
     private Recording toRecording(RecordingDto dto) {
