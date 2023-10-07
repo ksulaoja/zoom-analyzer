@@ -16,24 +16,21 @@ import java.time.Instant;
 @Entity
 public class Recording {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    private String filePath;
 
     // TODO add validations that either meetingId and password OR meetingURL is present
     private String meetingId;
-    private String meetingUrl;
     private String meetingPw;
 
     @NotNull(message = "Start time has to be set.")
     // TODO validate that start time is in the future
     private Instant startTime;
 
-    @NotNull(message = "Recording length has to be set.")
-    @Min(value = 1, message = "Recording length must be greater than 1 minute.")
-    @Max(value = 45, message = "Recording length must be less than 45 minutes.")
-    private int recordingLength;
+    @NotNull(message = "Recording duration has to be set.")
+    @Min(value = 1, message = "Recording duration must be greater than 1 minute.")
+    @Max(value = 45, message = "Recording duration must be less than 45 minutes.")
+    private int duration; // minutes
 
     @Email @NotBlank
     private String userEmail;
@@ -49,28 +46,12 @@ public class Recording {
         return id;
     }
 
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String path) {
-        this.filePath = path;
-    }
-
     public String getMeetingId() {
         return meetingId;
     }
 
     public void setMeetingId(String meetingId) {
         this.meetingId = meetingId;
-    }
-
-    public String getMeetingUrl() {
-        return meetingUrl;
-    }
-
-    public void setMeetingUrl(String meetingUrl) {
-        this.meetingUrl = meetingUrl;
     }
 
     public String getMeetingPw() {
@@ -89,12 +70,12 @@ public class Recording {
         this.startTime = startTime;
     }
 
-    public int getRecordingLength() {
-        return recordingLength;
+    public int getDuration() {
+        return duration;
     }
 
-    public void setRecordingLength(int recordingLength) {
-        this.recordingLength = recordingLength;
+    public void setDuration(int recordingLength) {
+        this.duration = recordingLength;
     }
 
     public String getUserEmail() {
@@ -117,12 +98,10 @@ public class Recording {
     public String toString() {
         return "Recording{" +
                 "id=" + id +
-                ", filePath='" + filePath + '\'' +
                 ", meetingId='" + meetingId + '\'' +
-                ", meetingUrl='" + meetingUrl + '\'' +
                 ", meetingPw='" + meetingPw + '\'' +
                 ", startTime=" + TimeUtils.toIso8601(startTime) +
-                ", recordingLength=" + recordingLength +
+                ", recordingLength=" + duration +
                 ", userEmail='" + userEmail + '\'' +
                 '}';
     }

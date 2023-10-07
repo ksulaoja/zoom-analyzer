@@ -3,6 +3,7 @@ package ee.taltech.zoomalyzer.services;
 import ee.taltech.zoomalyzer.dal.RecordingDal;
 import ee.taltech.zoomalyzer.entities.Recording;
 import lombok.AllArgsConstructor;
+import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,6 +26,20 @@ public class RecordingService {
         if (recording.getId() != null && recordingDal.findById(recording.getId()).isPresent()) {
             throw new RuntimeException("Recording exists");
         }
-        return recordingDal.save(recording);
+        // TODO validate/sanitize meetingId, password, email
+        // TODO if using meeting id (not url), check for password
+        if (isMeetingIdValid(recording.getMeetingId())) {
+            return recordingDal.save(recording);
+        }
+        throw new RuntimeException("Not valid meeting id");
+    }
+
+    private boolean isMeetingIdValid(String meetingId) {
+        if (meetingId.matches("^\\d*$") && meetingId.length() >= 10 && meetingId.length() <= 11) {
+            return true;
+        } else {
+            UrlValidator validator = new UrlValidator();
+            return validator.isValid(meetingId);
+        }
     }
 }

@@ -9,7 +9,7 @@ import jakarta.persistence.Id;
 @Entity
 public class LogLevel {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(unique = true)

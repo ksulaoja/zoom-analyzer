@@ -1,5 +1,6 @@
 package ee.taltech.zoomalyzer.controllers;
 
+import ee.taltech.zoomalyzer.conf.RecorderConfig;
 import ee.taltech.zoomalyzer.controllers.dtos.RecordingDto;
 import ee.taltech.zoomalyzer.entities.Recording;
 import ee.taltech.zoomalyzer.services.RecordingService;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,63 +23,77 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static ee.taltech.zoomalyzer.util.Utils.getUniqueName;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping(value = "/recordings")
 public class RecordingController {
 
     private final RecordingService recordingService;
+    private final RecorderConfig recorderConfig;
 
     @GetMapping
     public List<RecordingDto> getRecordings() {
         return recordingService.findAll()
-                .stream().map(this::convertToDto)
+                .stream().map(this::toDto)
                 .toList();
     }
 
     @PostMapping
     public RecordingDto scheduleRecording(@RequestBody RecordingDto dto) {
-        Recording recording = convertToRecording(dto);
+        Recording recording = toRecording(dto);
         Recording savedRec = recordingService.save(recording);
-        return convertToDto(savedRec);
+        return toDto(savedRec);
     }
 
-    @GetMapping("/test")
-    public ResponseEntity<Resource> downloadMP4() throws MalformedURLException {
-        Path mp4Path = Paths.get("backend/src/main/resources/testfiles/testfile.mp4");
+    @GetMapping("/{recordingId}")
+    public RecordingDto getRecording(@PathVariable("recordingId") Long recordingId) {
+        return toDto(recordingService.findById(recordingId));
+    }
 
-        Resource resource = new UrlResource(mp4Path.toUri());
+    @GetMapping("/download/{recordingId}")
+    public ResponseEntity<Resource> downloadRecording(@PathVariable("recordingId") Long recordingId) throws MalformedURLException {
+        // TODO
+        Recording recording = recordingService.findById(recordingId);
+        String filename = getUniqueName(recording) + recorderConfig.getFileType();
+        Path filePath = Paths.get(recorderConfig.getPath(),filename);
+
+        Resource resource = new UrlResource(filePath.toUri());
 
         if (resource.exists()) {
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=testfile.mp4");
-
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording));
+            MediaType mediaType = MediaType.parseMediaType("video/x-matroska");
             return ResponseEntity.ok()
                     .headers(headers)
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentType(mediaType)
                     .body(resource);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
 
-    private Recording convertToRecording(RecordingDto dto) {
+    private static String generateFileName(Recording recording) {
+        return String.format("meeting-%s-%s.mkv", recording.getId(), TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"));
+    }
+
+    private Recording toRecording(RecordingDto dto) {
         Recording recording = new Recording();
         recording.setMeetingId(dto.getMeetingId());
         recording.setMeetingPw(dto.getMeetingPw());
-        recording.setMeetingUrl(dto.getMeetingUrl());
-        recording.setRecordingLength(dto.getRecordingLength());
+        recording.setDuration(dto.getRecordingLength());
         recording.setStartTime(TimeUtils.toInstant(dto.getStartTime()));
         recording.setUserEmail(dto.getUserEmail());
         return recording;
     }
 
-    private RecordingDto convertToDto(Recording recording) {
+    private RecordingDto toDto(Recording recording) {
         RecordingDto dto = new RecordingDto();
+        dto.setId(recording.getId());
         dto.setMeetingId(recording.getMeetingId());
         dto.setMeetingPw(recording.getMeetingPw());
-        dto.setMeetingUrl(recording.getMeetingUrl());
-        dto.setRecordingLength(recording.getRecordingLength());
+        dto.setRecordingLength(recording.getDuration());
         dto.setStartTime(TimeUtils.toIso8601(recording.getStartTime()));
         dto.setUserEmail(recording.getUserEmail());
         return dto;

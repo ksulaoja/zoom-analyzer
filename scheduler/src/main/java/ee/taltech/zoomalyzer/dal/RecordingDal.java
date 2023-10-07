@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface RecordingDal extends JpaRepository<Recording, Long> {
 
-    List<Recording> findByStartTimeGreaterThanAndFilePathIsNullAndScheduledIsFalse(Instant startTime);
+    List<Recording> findByStartTimeGreaterThanAndScheduledIsFalse(Instant startTime);
 }
