@@ -27,6 +27,7 @@ public class RecordingService {
             throw new RuntimeException("Recording exists");
         }
         // TODO validate/sanitize meetingId, password, email
+        // TODO if using meeting id (not url), check for password
         if (isMeetingIdValid(recording.getMeetingId())) {
             return recordingDal.save(recording);
         }

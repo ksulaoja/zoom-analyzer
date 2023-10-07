@@ -91,8 +91,8 @@ public class RecordingScheduler {
     }
 
     private void startRecorder(Recording recording) {
-        logger.info(String.format("Start docker container to record: %s", recording));
         stopRecorder(recording);
+        logger.info(String.format("Start docker container to record: %s", recording));
         // TODO validate, sanitize meeting id & password in RecordingService
         String startCommand = String.format("docker run -d -e MEETING_ID=%s -e MEETING_PASSWORD=%s -e MEETING_DURATION=%s " +
                         "-e RECORDING_ID=%s --name %s -v %s:/home/zoomrec/recordings " +
@@ -129,13 +129,13 @@ public class RecordingScheduler {
         Process process = startProcessBuilder.start();
         InputStream stdout = process.getInputStream();
         BufferedReader stdoutReader = new BufferedReader(new InputStreamReader(stdout));
-        StringBuilder stdoutBuilder = new StringBuilder();
+        String line;
+        /*StringBuilder stdoutBuilder = new StringBuilder();
 
         // Read all lines of standard output
-        String line;
         while ((line = stdoutReader.readLine()) != null) {
             stdoutBuilder.append(line).append('\n');
-        }
+        }*/
 
         // Capture standard error
         InputStream stderr = process.getErrorStream();
@@ -151,9 +151,9 @@ public class RecordingScheduler {
         int exitCode = process.waitFor();
 
         // Print the captured output
-        logger.info("STDOUT:\n" + stdoutBuilder);
-        logger.info("STDERR:\n" + stderrBuilder);
-        logger.info("Exit Code: " + exitCode);
+        if (exitCode == 1) {
+            logger.warning("STDERR:\n" + stderrBuilder);
+        }
     }
 
     private void sendStatusLog(Recording recording, String message) {
