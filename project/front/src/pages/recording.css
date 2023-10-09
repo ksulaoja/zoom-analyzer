@@ -5,13 +5,13 @@
 
 .table-container {
     margin-bottom: 20px;
-    background-color: #0B5CFF;
+    background-color: #022772;
     padding: 16px;
     border-radius: 16px;
 }
 
 
-h2 {
+h2, h3 {
     margin-top: 0px;
     margin-left: 8px;
 }
@@ -23,7 +23,7 @@ table {
 }
 
 tr:not(:last-child) {
-    border-bottom: 1px solid #00256e;
+    border-bottom: 1px solid #000000;
     text-align: left;
 }
 
@@ -33,10 +33,16 @@ td, th {
 
 .downloadLink {
     padding: 10px 20px;
-    background-color: #2ecc71;
+    background-color: #0d813d;
     border: none;
     border-radius: 5px;
     color: #fff;
     cursor: pointer;
     text-decoration: none;
   }
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 8px;
+}

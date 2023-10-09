@@ -6,7 +6,7 @@ function Recording() {
   const [recordingMetadata, setRecordingMetadata] = useState({
     id: "",
     meetingId: "",
-    meetingPw: null,
+    meetingPw: "",
     startTime: "",
     recordingLength: null,
     userEmail: ""
@@ -18,6 +18,7 @@ function Recording() {
     time: "",
     recordingId: null
   }]);
+  const [latestStatus, setLatestStatus] = useState("UNKNOWN");
   const requestOptions = {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -32,7 +33,16 @@ function Recording() {
     fetch(`http://localhost:8080/recordings/${id}`, requestOptions)
     .then(response => response.json())
     .then(data => setRecordingMetadata(data));
+
+    fetch(`http://localhost:8080/log/recorder/${id}?level=STATUS`, requestOptions)
+    .then(response => response.json())
+    .then(data => {
+      if (data.length != 0) {
+        setLatestStatus(data[data.length - 1].message)
+      }
+    });
   }, [])
+
 
   const formatDateTime = (dateString: string): string => {
     const dateObject = new Date(dateString);
@@ -52,7 +62,11 @@ function Recording() {
   return (
     <div className='wrapper'>
       <div className='table-container'>
-        <h2>Recording metadata</h2>
+        <div className='header'>
+          <h2>Meeting data</h2>
+          <h3>Status: {latestStatus}</h3>
+
+        </div>
         <table>
           <tbody>
             {Object.entries(recordingMetadata).map(([key, value]) => (
@@ -67,7 +81,7 @@ function Recording() {
       </div>
 
       <div className='table-container'>
-        <h2>Recording statuses</h2>
+        <h2>Log</h2>
         <table>
           <thead>
             <tr>
