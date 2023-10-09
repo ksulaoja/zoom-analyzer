@@ -3,7 +3,27 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100%;
+    min-height: 100vh;
     margin: 0;
     background-color: #f0f0f0;
+  }
+
+  .navbar {
+    background-color: #0B5CFF;
+    padding: 0px 36px;
+    display: flex;
+    position: fixed;
+    width: 100%;
+  }
+
+  .navbarItem {
+    color: #f0f0f0;
+    padding: 16px;
+    text-decoration: none;
+    border: none;
+  }
+
+  .navbarItem:hover, .navbarItem:active {
+    background-color: #002b81;
   }

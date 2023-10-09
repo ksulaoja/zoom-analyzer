@@ -35,6 +35,7 @@ public class RecordingController {
     private final RecorderConfig recorderConfig;
 
     @GetMapping
+    @CrossOrigin(origins = "*")
     public List<RecordingDto> getRecordings() {
         return recordingService.findAll()
                 .stream().map(this::toDto)
@@ -50,11 +51,13 @@ public class RecordingController {
     }
 
     @GetMapping("/{recordingId}")
+    @CrossOrigin(origins = "*")
     public RecordingDto getRecording(@PathVariable("recordingId") Long recordingId) {
         return toDto(recordingService.findById(recordingId));
     }
 
     @GetMapping("/download/{recordingId}")
+    @CrossOrigin(origins = "*")
     public ResponseEntity<Resource> downloadRecording(@PathVariable("recordingId") Long recordingId) throws MalformedURLException {
         // TODO
         Recording recording = recordingService.findById(recordingId);

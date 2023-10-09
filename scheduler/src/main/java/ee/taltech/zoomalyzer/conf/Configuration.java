@@ -39,17 +39,9 @@ public class Configuration {
             Recording recording = new Recording();
             recording.setDuration(2);
             recording.setStartTime(Instant.now().plusSeconds(10L));
-            recording.setMeetingId("https://us04web.zoom.us/j/79988516346?pwd=Yo7vUYtgJDOhSC3B6uzwbMv6KShpbF.1");
+            recording.setMeetingId("https://us05web.zoom.us/j/81930438657?pwd=0Ic6x2MIybtiEuY8EhpilvMyxINNbP.1");
             recording.setUserEmail("paulbryantan@gmail.com");
             recordingDal.save(recording);
-
-            Recording recording2 = new Recording();
-            recording2.setDuration(2);
-            recording2.setStartTime(Instant.now().plusSeconds(15L));
-            recording2.setMeetingId("87407347984");
-            recording2.setMeetingPw("uyic1Y");
-            recording2.setUserEmail("paulbryantan@gmail.com");
-            recordingDal.save(recording2);
 
             LogLevel info = new LogLevel("INFO");
             LogLevel debug = new LogLevel("DEBUG");
