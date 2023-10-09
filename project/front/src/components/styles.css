@@ -28,3 +28,12 @@ button {
   color: #fff;
   cursor: pointer;
 }
+
+label {
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+h1 {
+  color: #f0f0f0;
+}

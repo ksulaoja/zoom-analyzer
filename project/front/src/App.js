@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import LoginForm from './components/LoginForm.tsx';
 import ZoomForm from './components/ZoomForm.tsx';
 import Layout from './components/Layout.tsx';
 
@@ -9,7 +8,7 @@ function App() {
     <BrowserRouter>
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={<LoginForm />} />
+        <Route index element={<ZoomForm />} />
         <Route path="zoom" element={<ZoomForm />} />
       </Route>
     </Routes>
