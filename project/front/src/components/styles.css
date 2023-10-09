@@ -1,6 +1,9 @@
+body {
+  margin: 0;
+}
 
 .form {
-  background-color: #3498db;
+  background-color: #022772;
   padding: 20px;
   border-radius: 10px;
   color: #fff;
@@ -22,7 +25,7 @@ input {
 
 button {
   padding: 10px 20px;
-  background-color: #2ecc71;
+  background-color: #0d813d;
   border: none;
   border-radius: 5px;
   color: #fff;

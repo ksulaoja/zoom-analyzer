@@ -1,0 +1,48 @@
+.wrapper {
+    margin-top: 100px;
+    color: #f0f0f0;
+}
+
+.table-container {
+    margin-bottom: 20px;
+    background-color: #00152c;
+    padding: 16px;
+    border-radius: 16px;
+}
+
+
+h2, h3 {
+    margin-top: 0px;
+    margin-left: 8px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+tr:not(:last-child) {
+    border-bottom: 1px solid #000000;
+    text-align: left;
+}
+
+td, th {
+    padding: 8px 16px;
+}
+
+.downloadLink {
+    padding: 8px 8px;
+    background-color: #0039ad;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding-right: 8px;
+}

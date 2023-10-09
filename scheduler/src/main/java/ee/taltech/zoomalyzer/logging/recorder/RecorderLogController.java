@@ -7,6 +7,7 @@ import ee.taltech.zoomalyzer.logging.recorder.entities.RecorderLogDto;
 import ee.taltech.zoomalyzer.services.RecordingService;
 import ee.taltech.zoomalyzer.util.TimeUtils;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +44,7 @@ public class RecorderLogController {
     }
 
     @GetMapping("/{recordingId}")
+    @CrossOrigin(origins = "*")
     public List<RecorderLogDto> getLogs(@PathVariable("recordingId") Long recordingId, @RequestParam(name = "level", required = false) String level) {
         Recording recording = recordingService.findById(recordingId);
         if (level != null && !level.isBlank()) {
