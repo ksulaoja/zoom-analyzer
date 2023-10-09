@@ -49,7 +49,7 @@ export const ZoomForm = () => {
       <h1>Zoom Analyzer</h1>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Meeting ID:</label>
+          <label>Meeting ID / URL:</label>
           <input
             type="text"
             name="meetingId"
