@@ -61,7 +61,7 @@ public class RecordingScheduler {
         List<RecorderLog> logs = recorderLogService.getLogsByLevel(recording, "STATUS");
         List<String> messages = logs.stream().map(RecorderLog::getMessage).toList();
         Optional<RecorderLog> statusRecording = logs.stream()
-                .filter(l -> l.getLogLevel().getName().equals("RECORDING"))
+                .filter(l -> l.getMessage().equals("RECORDING"))
                 .findFirst();
 
         String actionMsg = null;
@@ -95,7 +95,7 @@ public class RecordingScheduler {
         logger.info(String.format("Start docker container to record: %s", recording));
         // TODO validate, sanitize meeting id & password in RecordingService
         String startCommand = String.format("docker run -d -e MEETING_ID=%s -e MEETING_PASSWORD=%s -e MEETING_DURATION=%s " +
-                        "-e RECORDING_ID=%s --name %s -v %s:/home/zoomrec/recordings " +
+                        "-e RECORDING_ID=%s --name %s -v %s:/home/zoomrec/recordings -e DEBUG=True " +
                         "--security-opt seccomp:unconfined %s",
                 recording.getMeetingId(), recording.getMeetingPw(), recording.getDuration(),
                 recording.getId(), getUniqueName(recording), recorderConfig.getPath(), recorderConfig.getImage()
