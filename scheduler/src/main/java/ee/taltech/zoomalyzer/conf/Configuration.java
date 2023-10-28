@@ -1,9 +1,9 @@
 package ee.taltech.zoomalyzer.conf;
 
-import ee.taltech.zoomalyzer.dal.RecordingDal;
 import ee.taltech.zoomalyzer.entities.Recording;
 import ee.taltech.zoomalyzer.logging.general.LogLevel;
 import ee.taltech.zoomalyzer.logging.general.LogLevelDal;
+import ee.taltech.zoomalyzer.services.RecordingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +24,7 @@ public class Configuration {
     private final Logger logger = Logger.getLogger(Configuration.class.getSimpleName());
 
     @Bean
-    CommandLineRunner commandLineRunner(RecordingDal recordingDal, LogLevelDal logLevelDal, RecorderConfig recorderConfig) {
+    CommandLineRunner commandLineRunner(RecordingService recordingService, LogLevelDal logLevelDal, RecorderConfig recorderConfig) {
         return env -> {
             if (!isDockerInstalled()) {
                 throw new RuntimeException("Docker not installed");
@@ -37,11 +37,12 @@ public class Configuration {
             }
 
             Recording recording = new Recording();
-            recording.setDuration(2);
+            recording.setDuration(5);
             recording.setStartTime(Instant.now().plusSeconds(10L));
-            recording.setMeetingId("https://us05web.zoom.us/j/81930438657?pwd=0Ic6x2MIybtiEuY8EhpilvMyxINNbP.1");
+            recording.setMeetingId("https://us04web.zoom.us/j/79032370282?pwd=u9gscCvfPF7MYFCgvSaobZLOO0fq6c.1");
+            recording.setMeetingPw("911647");
             recording.setUserEmail("paulbryantan@gmail.com");
-            recordingDal.save(recording);
+            recordingService.save(recording);
 
             LogLevel info = new LogLevel("INFO");
             LogLevel debug = new LogLevel("DEBUG");

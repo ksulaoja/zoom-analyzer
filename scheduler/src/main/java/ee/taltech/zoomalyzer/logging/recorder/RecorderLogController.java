@@ -20,6 +20,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static ee.taltech.zoomalyzer.util.Utils.validateToken;
+
 @RestController
 @RequestMapping(value = "/log/recorder")
 @AllArgsConstructor
@@ -38,15 +40,19 @@ public class RecorderLogController {
     }
 
     @GetMapping("/local/{recordingId}")
-    public String getLocalLogs(@PathVariable("recordingId") Long recordingId) {
+    public String getLocalLogs(@PathVariable("recordingId") Long recordingId, @RequestParam(name = "token", required = false) String token) {
         Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
         return recorderLogService.getLocalLog(recording);
     }
 
     @GetMapping("/{recordingId}")
     @CrossOrigin(origins = "*")
-    public List<RecorderLogDto> getLogs(@PathVariable("recordingId") Long recordingId, @RequestParam(name = "level", required = false) String level) {
+    public List<RecorderLogDto> getLogs(@PathVariable("recordingId") Long recordingId,
+                                        @RequestParam(name = "level", required = false) String level,
+                                        @RequestParam(name = "token", required = false) String token) {
         Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
         if (level != null && !level.isBlank()) {
             return recorderLogService.getLogsByLevel(recording, level).stream().map(this::toDto).toList();
         }

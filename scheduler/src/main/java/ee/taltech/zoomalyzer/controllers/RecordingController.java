@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.MalformedURLException;
@@ -25,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static ee.taltech.zoomalyzer.util.Utils.getUniqueName;
+import static ee.taltech.zoomalyzer.util.Utils.validateToken;
 
 @RestController
 @AllArgsConstructor
@@ -37,6 +39,7 @@ public class RecordingController {
     @GetMapping
     @CrossOrigin(origins = "*")
     public List<RecordingDto> getRecordings() {
+        // admin interface, to be removed
         return recordingService.findAll()
                 .stream().map(this::toDto)
                 .toList();
@@ -52,15 +55,17 @@ public class RecordingController {
 
     @GetMapping("/{recordingId}")
     @CrossOrigin(origins = "*")
-    public RecordingDto getRecording(@PathVariable("recordingId") Long recordingId) {
+    public RecordingDto getRecording(@PathVariable("recordingId") Long recordingId, @RequestParam(name = "token", required = false) String token) {
+        Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
         return toDto(recordingService.findById(recordingId));
     }
 
     @GetMapping("/download/{recordingId}")
     @CrossOrigin(origins = "*")
-    public ResponseEntity<Resource> downloadRecording(@PathVariable("recordingId") Long recordingId) throws MalformedURLException {
-        // TODO
+    public ResponseEntity<Resource> downloadRecording(@PathVariable("recordingId") Long recordingId,  @RequestParam(name = "token", required = false) String token) throws MalformedURLException {
         Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
         String filename = getUniqueName(recording) + recorderConfig.getFileType();
         Path filePath = Paths.get(recorderConfig.getPath(),filename);
 
@@ -101,6 +106,7 @@ public class RecordingController {
         dto.setRecordingLength(recording.getDuration());
         dto.setStartTime(TimeUtils.toIso8601(recording.getStartTime()));
         dto.setUserEmail(recording.getUserEmail());
+        dto.setToken(recording.getToken());
         return dto;
     }
 }
