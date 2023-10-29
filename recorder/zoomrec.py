@@ -192,6 +192,7 @@ class HideViewOptionsThread:
                             pyautogui.press('down')
                             pyautogui.press('enter')
                             logging.info("Set view to side-by-side speaker")
+                            SCREENSHARING_SPEAKER_VIEW = True
                         except TypeError:
                             logging.error("Could not find view options!")
                     else:
@@ -661,7 +662,7 @@ def join(meet_id, meet_pw, duration):
         ffmpeg.pid), signal.SIGQUIT)
 
     start_date = datetime.now()
-    end_date = start_date + timedelta(seconds=duration + 120)  # Add 2 minutes for error
+    end_date = start_date + timedelta(seconds=duration + 30)  # Add 30s for buffer
     # Start thread to check active screensharing
     HideViewOptionsThread()
     

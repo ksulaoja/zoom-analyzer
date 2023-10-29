@@ -14,4 +14,5 @@ public class RecordingDto {
     private String startTime; // iso8601DateTime "2023-10-04T14:30:00.000Z" UTC
     private int recordingLength;
     private String userEmail;
+    private String token;
 }

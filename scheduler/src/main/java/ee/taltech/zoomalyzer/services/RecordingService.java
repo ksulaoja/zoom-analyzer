@@ -7,11 +7,16 @@ import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.logging.Logger;
+
+import static ee.taltech.zoomalyzer.util.Utils.generateRandomToken;
 
 @Service
 @AllArgsConstructor
 public class RecordingService {
     private final RecordingDal recordingDal;
+    private final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
+
 
     public List<Recording> findAll() {
         return recordingDal.findAll();
@@ -29,7 +34,10 @@ public class RecordingService {
         // TODO validate/sanitize meetingId, password, email
         // TODO if using meeting id (not url), check for password
         if (isMeetingIdValid(recording.getMeetingId())) {
-            return recordingDal.save(recording);
+            recording.setToken(generateRandomToken(16));
+            Recording newRecording = recordingDal.save(recording);
+            logger.info(String.format("Generated token '%s' for recording '%s'.", recording.getToken(), recording.getId()));
+            return newRecording;
         }
         throw new RuntimeException("Not valid meeting id");
     }

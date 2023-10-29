@@ -35,6 +35,7 @@ public class Recording {
     @Email @NotBlank
     private String userEmail;
     private boolean scheduled = false;
+    private String token;
 
     public Recording() {
     }
@@ -92,6 +93,14 @@ public class Recording {
 
     public void setScheduled(boolean scheduled) {
         this.scheduled = scheduled;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     @Override
