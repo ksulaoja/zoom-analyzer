@@ -11,19 +11,28 @@
 
   .navbar {
     background-color: #022772;
-    padding: 0px 36px;
+    justify-content: space-between;
     display: flex;
-    position: fixed;
+    position: relative;
     width: 100%;
   }
 
   .navbarItem {
+    left: 1;
     color: #f0f0f0;
     padding: 16px;
+    padding: 16px 36px;
     text-decoration: none;
     border: none;
   }
 
   .navbarItem:hover, .navbarItem:active {
     background-color: #002b81;
+  }
+
+  .title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #f0f0f0;
   }
