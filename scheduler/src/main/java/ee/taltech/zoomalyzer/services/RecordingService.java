@@ -2,6 +2,8 @@ package ee.taltech.zoomalyzer.services;
 
 import ee.taltech.zoomalyzer.dal.RecordingDal;
 import ee.taltech.zoomalyzer.entities.Recording;
+import ee.taltech.zoomalyzer.util.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
@@ -15,7 +17,8 @@ import static ee.taltech.zoomalyzer.util.Utils.generateRandomToken;
 @AllArgsConstructor
 public class RecordingService {
     private final RecordingDal recordingDal;
-    private final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
+    private static final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
+    private final EmailService emailService;
 
 
     public List<Recording> findAll() {
@@ -33,13 +36,19 @@ public class RecordingService {
         }
         // TODO validate/sanitize meetingId, password, email
         // TODO if using meeting id (not url), check for password
-        if (isMeetingIdValid(recording.getMeetingId())) {
-            recording.setToken(generateRandomToken(16));
-            Recording newRecording = recordingDal.save(recording);
-            logger.info(String.format("Generated token '%s' for recording '%s'.", recording.getToken(), recording.getId()));
-            return newRecording;
+        if (!isMeetingIdValid(recording.getMeetingId())) {
+            throw new RuntimeException("Not valid meeting id");
         }
-        throw new RuntimeException("Not valid meeting id");
+        recording.setToken(generateRandomToken(16));
+        Recording newRecording = recordingDal.save(recording);
+        logger.info(String.format("Generated token '%s' for recording '%s'.", recording.getToken(), recording.getId()));
+        try {
+            emailService.sendSavedRecordingEmail(recording);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send recording email to " + recording.getUserEmail());
+        }
+        // TODO add recording activation link to email
+        return newRecording;
     }
 
     private boolean isMeetingIdValid(String meetingId) {
