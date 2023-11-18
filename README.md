@@ -8,3 +8,5 @@ Robot, that joins zoom meeting and starts recording and analysing:
 Recorded analysed data will be saved in csv file...
 
 # INSTRUCTIONS in /scheduler/README.md
+
+# ANALYZER INSTRUCTIONS in /analyzer/README.md
