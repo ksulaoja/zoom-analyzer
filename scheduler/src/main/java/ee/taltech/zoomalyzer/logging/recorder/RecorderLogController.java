@@ -61,10 +61,10 @@ public class RecorderLogController {
 
     private RecorderLog toRecorderLog(RecorderLogDto dto) {
         RecorderLog log = new RecorderLog();
+        log.setTime(Instant.now());
         log.setMessage(dto.getMessage());
         log.setRecording(recordingService.findById(dto.getRecordingId()));
         log.setLogLevel(logLevelService.findByName(dto.getLogLevel()));
-        log.setTime(Instant.now());
         return log;
     }
 
