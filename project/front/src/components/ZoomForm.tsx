@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import './styles.css';
 
 export const ZoomForm = () => {
@@ -6,10 +7,11 @@ export const ZoomForm = () => {
     meetingId: '',
     meetingPw: '',
     startTime: '',
-    recordingLength: 0,
+    recordingLength: 5,
     userEmail: ''
   });
   const [showPw, setShowPw] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +43,7 @@ export const ZoomForm = () => {
 
     fetch('http://localhost:8080/recordings', requestOptions)
     .then(response => response.json())
-    .then(data => console.log(data));
+    .then(data => navigate(`/recordings/recording/${data.id}?token=${data.token}`));
   };
 
   return (
@@ -80,8 +82,11 @@ export const ZoomForm = () => {
         </div>
         <div>
           <label>Meeting Length (in minutes):</label>
+          <p className='sliderValue'>{formData.recordingLength}</p>
           <input
-            type="number"
+            type="range"
+            min={5}
+            max={90}
             name="recordingLength"
             value={formData.recordingLength}
             onChange={handleChange}
@@ -98,6 +103,7 @@ export const ZoomForm = () => {
             required
           />
         </div>
+        <p>A link containing the status and the recording will be sent to your email. You will be notified via email if the recording fails.</p>
         <button type="submit">Send Data</button>
       </form>
     </div>

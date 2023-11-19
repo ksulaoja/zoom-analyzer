@@ -7,7 +7,7 @@ function Layout({ children }) {
     <>
       <div className='navbar'>
         <Link className='navbarItem' to="/">Home</Link>
-        <Link className='navbarItem' to="/recordings">Recordings</Link>
+        <p className='title'>ZOOMALYZER</p>
       </div>
     <div className='container'>
       <Outlet />

@@ -39,7 +39,12 @@ td, th {
     color: #fff;
     cursor: pointer;
     text-decoration: none;
-  }
+}
+
+.downloadLink_disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
 
 .header {
     display: flex;
