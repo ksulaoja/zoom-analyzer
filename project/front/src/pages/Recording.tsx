@@ -69,12 +69,17 @@ function Recording() {
         </div>
         <table>
           <tbody>
-            {Object.entries(recordingMetadata).map(([key, value]) => (
-              <tr key={key}>
-                <td>{key}</td>
-                <td>{value}</td>
-              </tr>
-            ))}
+            {Object.entries(recordingMetadata).map(([key, value]) => {
+              if (key !== "token") {
+                return (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{value}</td>
+                  </tr>
+                )
+                }
+              }
+            )}
           </tbody>
         </table>
         <a className='downloadLink' href={`http://localhost:8080/recordings/download/${id}`} target="_blank">Download video</a>
