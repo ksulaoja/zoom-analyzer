@@ -82,7 +82,7 @@ function Recording() {
             )}
           </tbody>
         </table>
-        <a className='downloadLink' href={`http://localhost:8080/recordings/download/${id}`} target="_blank">Download video</a>
+        <a className={`downloadLink ${!["ENDED", "FAILED"].includes(latestStatus) && "downloadLink_disabled"}`} href={`http://localhost:8080/recordings/download/${id}`} target="_blank">Download video</a>
       </div>
 
       <div className='table-container'>
