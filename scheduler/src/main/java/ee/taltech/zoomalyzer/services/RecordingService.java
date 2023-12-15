@@ -2,20 +2,25 @@ package ee.taltech.zoomalyzer.services;
 
 import ee.taltech.zoomalyzer.dal.RecordingDal;
 import ee.taltech.zoomalyzer.entities.Recording;
+import ee.taltech.zoomalyzer.util.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
 import static ee.taltech.zoomalyzer.util.Utils.generateRandomToken;
+import static ee.taltech.zoomalyzer.util.Utils.getUniqueName;
 
 @Service
 @AllArgsConstructor
 public class RecordingService {
     private final RecordingDal recordingDal;
-    private final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
+    private static final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
+    private final EmailService emailService;
 
 
     public List<Recording> findAll() {
@@ -33,13 +38,46 @@ public class RecordingService {
         }
         // TODO validate/sanitize meetingId, password, email
         // TODO if using meeting id (not url), check for password
-        if (isMeetingIdValid(recording.getMeetingId())) {
-            recording.setToken(generateRandomToken(16));
-            Recording newRecording = recordingDal.save(recording);
-            logger.info(String.format("Generated token '%s' for recording '%s'.", recording.getToken(), recording.getId()));
-            return newRecording;
+        if (!isMeetingIdValid(recording.getMeetingId())) {
+            throw new RuntimeException("Not valid meeting id");
         }
-        throw new RuntimeException("Not valid meeting id");
+        recording.setToken(generateRandomToken(16));
+        Recording newRecording = recordingDal.save(recording);
+        logger.info(String.format("Generated token '%s' for recording '%s'.", recording.getToken(), recording.getId()));
+        try {
+            emailService.sendSavedRecordingEmail(recording);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send recording email to " + recording.getUserEmail());
+        }
+        // TODO add recording activation link to email
+        return newRecording;
+    }
+
+    public void startAnalysis(Recording recording) {
+        try {
+            // Vaata vb pead pathe muutma ./zoom-analyzer vms
+            String pythonScriptPath = "zoom-analyzer/analyzer/scr.py";
+            // Siit saad failinime kätte nii
+            String filenam = getUniqueName(recording) + ".csv";
+            ProcessBuilder processBuilder = new ProcessBuilder("python", pythonScriptPath + "analyzer.py");
+
+            // Set the working directory to the directory containing the Python script
+            processBuilder.directory(new java.io.File(pythonScriptPath));
+
+            Process process = processBuilder.start();
+
+            // Wait for the process to finish (optional)
+            //int exitCode = process.waitFor();
+
+            // Check the exit code to determine if the process was successful
+            /*if (exitCode == 0) {
+                System.out.println("Python script executed successfully.");
+            } else {
+                System.err.println("Error executing Python script. Exit code: " + exitCode);
+            }*/
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     private boolean isMeetingIdValid(String meetingId) {

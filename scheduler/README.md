@@ -1,10 +1,19 @@
-# Zoomalyzer BACKEND
-Records Zoom calls locally. Analyzes recorded data to track which participants were the most active.
+# Zoomalyzer
+Record and perform speaker diarization on Zoom calls.
 
-## Setup
-Java 21, Docker, Recorder docker image (zoomalyzer-recorder)
+## Setup Frontend
+Open CMD, navigate to /project/front.
+Run
+`npm i` and
+`npm start`
+Open http://localhost:3000
 
-#### Database
+
+
+## Setup Backend
+Make sure you have Java 21 and Docker installed
+
+### Database
 ``
 docker pull mysql
 ``\
@@ -16,13 +25,24 @@ Connect to database, run ``
 CREATE DATABASE zoomalyzer;
 ``
 
-#### Recorder image
+### Recorder
+
+#### Build base image
+Navigate to /recorder/base, then enter
+``
+    docker build -t up-zoomrec .
+``
+#### Build second image
 Navigate to /recorder, then enter
 ``
-    docker build -t zoomalyzer-recorder .
+docker build -t zoomalyzer-recorder .
 ``
 
-#### /resources/application.properties file contents
+## Spring setup
+
+Add properties file then run scheduler/src/main/java/../ZoomalyzerApplication.java
+
+#### scheduler/src/main/resources/application.properties file contents
 ````
 # Database connection properties
 spring.datasource.url=jdbc:mysql://localhost:3306/zoomalyzer
@@ -34,11 +54,22 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 
-recorder.path=C:/Users/paulb/Projects/School/zoom-analyzer/recorder/recordings
+recorder.path={full_path_to_project}/recorder/recordings
 recorder.image=zoomalyzer-recorder
 # max minutes for startup -> recording
 recorder.max-joining-time=15
 #in seconds, period to check recorder status
 recorder.status-check-period=20
 recorder.file-type=.mkv
+
+frontend.recording.url=http://localhost:3000/recordings/recording/
+
+# email
+mail.smtp.auth=true
+mail.smtp.starttls.enable=true
+mail.smtp.host=sandbox.smtp.mailtrap.io
+mail.smtp.port=2525
+#mail.smtp.ssl.trust=smtp.mailtrap.io for live version
+mailtramp.username=d15b687d8effcb
+mailtramp.password=4955a70c4cc22c
 ````

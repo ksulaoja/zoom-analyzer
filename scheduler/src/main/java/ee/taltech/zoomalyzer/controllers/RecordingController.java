@@ -61,6 +61,15 @@ public class RecordingController {
         return toDto(recordingService.findById(recordingId));
     }
 
+    @GetMapping("/analyze/{recordingId}")
+    @CrossOrigin(origins = "*")
+    public String startAnalysis(@PathVariable("recordingId") Long recordingId, @RequestParam(name = "token", required = false) String token) {
+        Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
+        recordingService.startAnalysis(recording);
+        return "Started";
+    }
+
     @GetMapping("/download/{recordingId}")
     @CrossOrigin(origins = "*")
     public ResponseEntity<Resource> downloadRecording(@PathVariable("recordingId") Long recordingId,  @RequestParam(name = "token", required = false) String token) throws MalformedURLException {
@@ -73,7 +82,7 @@ public class RecordingController {
 
         if (resource.exists()) {
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording));
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording, recorderConfig.getFileType()));
             MediaType mediaType = MediaType.parseMediaType("video/x-matroska");
             return ResponseEntity.ok()
                     .headers(headers)
@@ -84,8 +93,32 @@ public class RecordingController {
         }
     }
 
-    private static String generateFileName(Recording recording) {
-        return String.format("meeting-%s-%s.mkv", recording.getId(), TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"));
+    @GetMapping("/download/analyze/{recordingId}")
+    @CrossOrigin(origins = "*")
+    public ResponseEntity<Resource> downloadAnalysis(@PathVariable("recordingId") Long recordingId,  @RequestParam(name = "token", required = false) String token) throws MalformedURLException {
+        Recording recording = recordingService.findById(recordingId);
+        validateToken(token, recording);
+        String filename = getUniqueName(recording) + ".csv";
+        Path filePath = Paths.get(recorderConfig.getPath(),filename);
+
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (resource.exists()) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording, ".csv"));
+            MediaType mediaType = MediaType.parseMediaType("text/csv");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(mediaType)
+                    .body(resource);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    private static String generateFileName(Recording recording, String extension) {
+        return String.format("meeting-%s-%s%s", recording.getId(), TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"), extension);
     }
 
     private Recording toRecording(RecordingDto dto) {

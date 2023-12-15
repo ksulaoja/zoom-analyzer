@@ -4,6 +4,7 @@ Dockerized Ubuntu desktop for recording Zoom calls.
 
 ### How to run
 #### Build image
+Build image in /recorder/base directory, then
 Navigate to /recorder in CLI \
 Run ``
 docker build -t zoomalyzer-recorder .

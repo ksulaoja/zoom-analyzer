@@ -29,7 +29,7 @@ public class Recording {
 
     @NotNull(message = "Recording duration has to be set.")
     @Min(value = 1, message = "Recording duration must be greater than 1 minute.")
-    @Max(value = 45, message = "Recording duration must be less than 45 minutes.")
+    @Max(value = 90, message = "Recording duration must be less than 90 minutes.")
     private int duration; // minutes
 
     @Email @NotBlank
