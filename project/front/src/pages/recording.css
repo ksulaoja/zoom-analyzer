@@ -31,6 +31,11 @@ td, th {
     padding: 8px 16px;
 }
 
+.buttonWrapper {
+    display: flex;
+    gap: 16px;
+}
+
 .downloadLink {
     padding: 8px 8px;
     background-color: #0039ad;

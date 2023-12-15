@@ -55,28 +55,26 @@ public class RecordingService {
 
     public void startAnalysis(Recording recording) {
         try {
-            // Vaata vb pead pathe muutma ./zoom-analyzer vms
-            String pythonScriptPath = "zoom-analyzer/analyzer/scr.py";
-            // Siit saad failinime kätte nii
-            String filenam = getUniqueName(recording) + ".csv";
-            ProcessBuilder processBuilder = new ProcessBuilder("python", pythonScriptPath + "analyzer.py");
+            String filename = getUniqueName(recording) + ".mkv";
+            filename = "video1624200094.wav";
+            String command = "python C:\\Users\\kristjan\\zoom-analyzer\\analyzer\\analyzer.py " + filename;
 
-            // Set the working directory to the directory containing the Python script
-            processBuilder.directory(new java.io.File(pythonScriptPath));
+            ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", command);
+            processBuilder.redirectErrorStream(true); // Redirect error stream to input stream
 
             Process process = processBuilder.start();
 
             // Wait for the process to finish (optional)
-            //int exitCode = process.waitFor();
+            int exitCode = process.waitFor();
 
             // Check the exit code to determine if the process was successful
-            /*if (exitCode == 0) {
+            if (exitCode == 0) {
                 System.out.println("Python script executed successfully.");
             } else {
                 System.err.println("Error executing Python script. Exit code: " + exitCode);
-            }*/
-        } catch (IOException e) {
-            logger.warning(e.getMessage());
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

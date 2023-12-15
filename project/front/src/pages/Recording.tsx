@@ -9,7 +9,8 @@ function Recording() {
     meetingPw: "",
     startTime: "",
     recordingLength: null,
-    userEmail: ""
+    userEmail: "",
+    token: ""
   });
   const [recordingStatusData, setRecordingStatusData] = useState([{
     id: null,
@@ -23,7 +24,7 @@ function Recording() {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   };
-  const { id } = useParams();
+  const { id, token } = useParams();
 
   useEffect(() => {
     fetch(`http://localhost:8080/log/recorder/${id}`, requestOptions)
@@ -42,6 +43,12 @@ function Recording() {
       }
     });
   }, [])
+
+  const analyse = (): void => {
+    fetch(`http://localhost:8080/recordings/analyze/${id}?token=${recordingMetadata.token}`, requestOptions)
+    .then(response => response.json())
+    .then(data => console.log(data));
+  }
 
 
   const formatDateTime = (dateString: string): string => {
@@ -82,7 +89,10 @@ function Recording() {
             )}
           </tbody>
         </table>
-        <a className={`downloadLink ${!["ENDED", "FAILED"].includes(latestStatus) && "downloadLink_disabled"}`} href={`http://localhost:8080/recordings/download/${id}`} target="_blank">Download video</a>
+        <div className='buttonWrapper'>
+          <a className={`downloadLink ${!["ENDED", "FAILED"].includes(latestStatus) && "downloadLink_disabled"}`} href={`http://localhost:8080/recordings/download/${id}`} target="_blank">Download video</a>
+          <button onClick={analyse}>Analyse</button>
+        </div>
       </div>
 
       <div className='table-container'>
