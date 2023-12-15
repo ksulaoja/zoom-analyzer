@@ -109,8 +109,8 @@ class BackgroundThread:
                     logging.error("Could not accept 'this meeting is being recorded'!")
 
             # Check if ended
-            if (pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_ended_by_host_1.png'),
-                                         confidence=0.9) is not None or pyautogui.locateOnScreen(
+            if (_locateCenterOnScreen(os.path.join(IMG_PATH, 'meeting_ended_by_host_1.png'),
+                                         confidence=0.9) is not None or _locateCenterOnScreen(
                 os.path.join(IMG_PATH, 'meeting_ended_by_host_2.png'), confidence=0.9) is not None):
                 ONGOING_MEETING = False
                 logging.info("Meeting ended by host")
@@ -135,6 +135,16 @@ class HideViewOptionsThread:
             # TODO check if host kicked / put back to waiting room
             # TODO sharing screen is not always fullscreen
 
+            # popup close
+            if _locateCenterOnScreen(os.path.join(
+                    IMG_PATH, 'popup2_close.png'), confidence=0.9) is not None:
+                try:
+                    x, y = _locateCenterOnScreen(os.path.join(
+                        IMG_PATH, 'popup2_close.png'), confidence=0.9)
+                    pyautogui.click(x, y)
+                except TypeError:
+                    logging.debug("Could not close enhanced multi popup")
+
             # Check if host is sharing poll results
             if (_locateCenterOnScreen(os.path.join(IMG_PATH, 'host_is_sharing_poll_results.png'),
                                                confidence=0.9,
@@ -152,44 +162,16 @@ class HideViewOptionsThread:
                     except TypeError:
                         logging.error("Could not exit poll results window!")
                         if DEBUG:
-                            print("fafa")
-                            #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                            #    TIME_FORMAT) + "-") + "_close_poll_results_error.png")
+                            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                                TIME_FORMAT) + "-") + "_close_poll_results_error.png")
                 except TypeError:
                     logging.error("Could not find poll results window anymore!")
                     if DEBUG:
-                        print("fafa")
-                        #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                        #    TIME_FORMAT) + "-") + "_find_poll_results_error.png")
-
-            # Close chat
-            if pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_chat_popup.png'), confidence=0.9) is not None:
-                # Popup chat
-                logging.info("Meeting chat popup window active, closing it")
-                try:
-                    x, y = _locateCenterOnScreen(os.path.join(
-                        IMG_PATH, 'meeting_chat_popup.png'), confidence=0.9)
-                    pyautogui.click(x, y)
-                    pyautogui.keyDown('alt')
-                    pyautogui.press('f4')
-                    pyautogui.keyUp('alt')
-                except TypeError:
-                    logging.error("Could not close popup chat!")
-
-            elif (pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'meeting_chat.png'), confidence=0.9) is not None):
-                # Side chat
-                logging.info("Meeting chat side window active, closing it")
-                try:
-                    x, y = _locateCenterOnScreen(os.path.join(
-                        IMG_PATH, 'meeting_chat.png'), confidence=0.9)
-                    pyautogui.click(x - 105, y) # click options button on the left 105px
-                    time.sleep(1)
-                    pyautogui.click(x - 105 + 20, y + 20) # close button
-                except TypeError:
-                    logging.error("Could not find chat options!")
+                        pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                            TIME_FORMAT) + "-") + "_find_poll_results_error.png")
 
             # Check if screensharing
-            if pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'view_options.png'), confidence=0.9) is not None:
+            if _locateCenterOnScreen(os.path.join(IMG_PATH, 'view_options.png'), confidence=0.9) is not None:
                 if not SCREENSHARING_SPEAKER_VIEW:
                     logging.info("Screensharing active..")
                     if _locateCenterOnScreen(os.path.join(IMG_PATH, 'side_by_side_separator.png'), confidence=0.9) is None:
@@ -212,9 +194,9 @@ class HideViewOptionsThread:
             else:
                 SCREENSHARING_SPEAKER_VIEW = False
                 # Set fit to screen
-                if (pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'zoom_window_title.png'), confidence=0.9) is not None
+                if (_locateCenterOnScreen(os.path.join(IMG_PATH, 'zoom_window_title.png'), confidence=0.9) is not None
                         and
-                        pyautogui.locateOnScreen(os.path.join(IMG_PATH, 'zoom_exit_btn.png'), confidence=0.9) is None
+                        _locateCenterOnScreen(os.path.join(IMG_PATH, 'zoom_exit_btn.png'), confidence=0.9) is None
                 ):
                     logging.info("Window is not fit to screen, resizing")
                     pyautogui.keyDown('alt')
@@ -382,9 +364,8 @@ def join_audio():
     except TypeError:
         logging.error("Could not join with computer audio!")
         if DEBUG:
-            print("fafa")
-            #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-            #    TIME_FORMAT)) + "_join_with_computer_audio_error.png")
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT)) + "_join_with_computer_audio_error.png")
     time.sleep(1)
     if not audio_joined:
         try:
@@ -397,9 +378,8 @@ def join_audio():
             logging.error("Could not join audio!")
             logging.log(STATUS_LEVEL, "FAILED")
             if DEBUG:
-                print("fafa")
-                #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                #   TIME_FORMAT)) + "_join_audio_error.png")
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                   TIME_FORMAT)) + "_join_audio_error.png")
             return False
 
 
@@ -560,7 +540,6 @@ def join(meet_id, meet_pw, duration):
                                       minSearchTime=3) is not None:
         in_waitingroom = True
         logging.info("Waiting for the host to admit bot to meeting")
-
     # Wait while host will let you in
     # Exit when connecting time is too long
     while in_waitingroom:
@@ -627,9 +606,8 @@ def join(meet_id, meet_pw, duration):
     except TypeError:
         logging.error("Could not find view button!")
         if DEBUG:
-            print("fafa")
-            #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-            #    TIME_FORMAT)) + "_view_error.png")
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT)) + "_view_error.png")
 
     time.sleep(1)
 
@@ -647,10 +625,17 @@ def join(meet_id, meet_pw, duration):
         except TypeError:
             logging.error("Could not change to speaker nor side-by-side speaker view")
             if DEBUG:
-                print("fafa")
-                #pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
-                #    TIME_FORMAT)) + "_speaker_view_error.png")
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT)) + "_speaker_view_error.png")
 
+    time.sleep(1)
+    try:
+        # speaker view
+        x, y = _locateCenterOnScreen(os.path.join(
+            IMG_PATH, 'popup1_close.png'), confidence=0.9)
+        pyautogui.click(x, y)
+    except TypeError:
+        logging.debug("Could not close whiteboard popup")
 
     # Move mouse from screen
     pyautogui.moveTo(0, 100)

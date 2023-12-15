@@ -8,10 +8,12 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
 import static ee.taltech.zoomalyzer.util.Utils.generateRandomToken;
+import static ee.taltech.zoomalyzer.util.Utils.getUniqueName;
 
 @Service
 @AllArgsConstructor
@@ -49,6 +51,33 @@ public class RecordingService {
         }
         // TODO add recording activation link to email
         return newRecording;
+    }
+
+    public void startAnalysis(Recording recording) {
+        try {
+            // Vaata vb pead pathe muutma ./zoom-analyzer vms
+            String pythonScriptPath = "zoom-analyzer/analyzer/scr.py";
+            // Siit saad failinime kätte nii
+            String filenam = getUniqueName(recording) + ".csv";
+            ProcessBuilder processBuilder = new ProcessBuilder("python", pythonScriptPath + "analyzer.py");
+
+            // Set the working directory to the directory containing the Python script
+            processBuilder.directory(new java.io.File(pythonScriptPath));
+
+            Process process = processBuilder.start();
+
+            // Wait for the process to finish (optional)
+            //int exitCode = process.waitFor();
+
+            // Check the exit code to determine if the process was successful
+            /*if (exitCode == 0) {
+                System.out.println("Python script executed successfully.");
+            } else {
+                System.err.println("Error executing Python script. Exit code: " + exitCode);
+            }*/
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     private boolean isMeetingIdValid(String meetingId) {
