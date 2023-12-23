@@ -31,7 +31,7 @@ public class EmailService {
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(props.getProperty("mailtramp.username"), props.getProperty("mailtramp.password"));
+                return new PasswordAuthentication(props.getProperty("mailtrap.username"), props.getProperty("mailtrap.password"));
             }
         });
 

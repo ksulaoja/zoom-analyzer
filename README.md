@@ -1,5 +1,3 @@
-ANALYZER INSTRUCTIONS in /analyzer/README.md
-
 # Zoomalyzer
 Record and perform speaker diarization on Zoom calls.
 
@@ -46,12 +44,51 @@ Navigate to /recorder, then enter
 docker build -t zoomalyzer-recorder .
 ``
 
-### Spring setup
 
-Add properties file then run scheduler/src/main/java/../ZoomalyzerApplication.java
+### Analyzer Python script
+Navigate to /analyzer directory. Create virtual env for Python:
+`python -m venv venv`
+
+Install pyannote.audio 3.1 with `pip install pyannote.audio`
+
+Install pytorch with `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118`
+
+
+
+### Spring setup
+Configure properties file then run Run scheduler/src/main/java/../ZoomalyzerApplication.java.
+
+Below is the content of properties file. Add full path to project as `recorder.root-path`.
+
+Generate new project on www.mailtrap.io and add credentials for the email service to `mailtrap.username&password`
+
+Create access token at [hf.co/settings/tokens](https://huggingface.co/settings/tokens).
+Add your access token to `recorder.token`
+
+Accept [pyannote/segmentation-3.0](https://huggingface.co/pyannote/segmentation-3.0) user conditions
+
+Accept [pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1) user conditions
+
 
 #### scheduler/src/main/resources/application.properties file contents
 ````
+# CONFIGURE THIS
+
+recorder.token={access_token_from_hf.co}
+# e.g recorder.token=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
+recorder.root-path={full_path_to_project}
+# e.g. recorder.root-path=C:/Users/paulb/Projects/School/zoom-analyzer
+
+# Uncomment the line below for mailtrap.io live version
+#mail.smtp.ssl.trust=smtp.mailtrap.io
+
+mailtrap.username={mailtrap.io generated username}
+mailtrap.password={mailtrap.io generated password}
+# e.g. mailtrap.username=d15b687d8effcb
+# e.g. mailtrap.password=4955a70c4cc22c
+
+# IGNORE BELOW
+
 # Database connection properties
 spring.datasource.url=jdbc:mysql://localhost:3306/zoomalyzer
 spring.datasource.username=root
@@ -62,7 +99,6 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 
-recorder.path={full_path_to_project}/recorder/recordings
 recorder.image=zoomalyzer-recorder
 # max minutes for startup -> recording
 recorder.max-joining-time=15
@@ -72,12 +108,8 @@ recorder.file-type=.mkv
 
 frontend.recording.url=http://localhost:3000/recordings/recording/
 
-# email
 mail.smtp.auth=true
 mail.smtp.starttls.enable=true
 mail.smtp.host=sandbox.smtp.mailtrap.io
 mail.smtp.port=2525
-#mail.smtp.ssl.trust=smtp.mailtrap.io for live version
-mailtramp.username=d15b687d8effcb
-mailtramp.password=4955a70c4cc22c
 ````

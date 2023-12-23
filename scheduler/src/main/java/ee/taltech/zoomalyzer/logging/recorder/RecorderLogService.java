@@ -38,7 +38,7 @@ public class RecorderLogService {
     }
 
     public String getLocalLog(Recording recording) {
-        Path path = Paths.get(recorderConfig.getPath(), "screenshots", getUniqueName(recording) + ".log");
+        Path path = Paths.get(recorderConfig.getRecorderPath(), "screenshots", getUniqueName(recording) + ".log");
         if (Files.exists(path) && Files.isRegularFile(path)) {
             try {
                 return new String(Files.readAllBytes(path));

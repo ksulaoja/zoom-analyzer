@@ -70,6 +70,6 @@ mail.smtp.starttls.enable=true
 mail.smtp.host=sandbox.smtp.mailtrap.io
 mail.smtp.port=2525
 #mail.smtp.ssl.trust=smtp.mailtrap.io for live version
-mailtramp.username=d15b687d8effcb
-mailtramp.password=4955a70c4cc22c
+mailtrap.username=d15b687d8effcb
+mailtrap.password=4955a70c4cc22c
 ````

@@ -98,7 +98,7 @@ public class RecordingScheduler {
                         "-e RECORDING_ID=%s --name %s -v %s:/home/zoomrec/recordings -e DEBUG=True " +
                         "--security-opt seccomp:unconfined %s",
                 recording.getMeetingId(), recording.getMeetingPw(), recording.getDuration(),
-                recording.getId(), getUniqueName(recording), recorderConfig.getPath(), recorderConfig.getImage()
+                recording.getId(), getUniqueName(recording), recorderConfig.getRecorderPath(), recorderConfig.getImage()
                 );
 
         try {
