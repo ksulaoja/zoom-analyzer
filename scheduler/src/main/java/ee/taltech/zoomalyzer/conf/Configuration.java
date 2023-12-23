@@ -37,13 +37,13 @@ public class Configuration {
                 throw new RuntimeException("Docker image " + recorderConfig.getImage() + " is not available");
             }
 
-            Recording recording = new Recording();
+            /*Recording recording = new Recording();
             recording.setDuration(5);
             recording.setStartTime(Instant.now().plusSeconds(100000000L));
             recording.setMeetingId("https://us04web.zoom.us/j/79046434327?pwd=MgaoVWJVcGoyJyUJ6UVSgaTfA11aX1.1");
             recording.setMeetingPw("911647");
             recording.setUserEmail("paulbryantan@gmail.com");
-            recordingService.save(recording);
+            recordingService.save(recording);*/
 
             LogLevel info = new LogLevel("INFO");
             LogLevel debug = new LogLevel("DEBUG");
