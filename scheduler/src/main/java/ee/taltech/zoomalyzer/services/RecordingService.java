@@ -1,5 +1,6 @@
 package ee.taltech.zoomalyzer.services;
 
+import ee.taltech.zoomalyzer.conf.RecorderConfig;
 import ee.taltech.zoomalyzer.dal.RecordingDal;
 import ee.taltech.zoomalyzer.entities.Recording;
 import ee.taltech.zoomalyzer.util.EmailService;
@@ -8,7 +9,10 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -21,6 +25,7 @@ public class RecordingService {
     private final RecordingDal recordingDal;
     private static final Logger logger = Logger.getLogger(RecordingService.class.getSimpleName());
     private final EmailService emailService;
+    private final RecorderConfig recorderConfig;
 
 
     public List<Recording> findAll() {
@@ -55,28 +60,47 @@ public class RecordingService {
 
     public void startAnalysis(Recording recording) {
         try {
-            // Vaata vb pead pathe muutma ./zoom-analyzer vms
-            String pythonScriptPath = "zoom-analyzer/analyzer/scr.py";
-            // Siit saad failinime kätte nii
-            String filenam = getUniqueName(recording) + ".csv";
-            ProcessBuilder processBuilder = new ProcessBuilder("python", pythonScriptPath + "analyzer.py");
+            String filePath = recorderConfig.getRecorderPath() + "/" + getUniqueName(recording) + "-1.csv";
 
-            // Set the working directory to the directory containing the Python script
-            processBuilder.directory(new java.io.File(pythonScriptPath));
+            File file = new File(filePath);
 
-            Process process = processBuilder.start();
+            if (file.exists()) {
+                logger.info("Analysis already exists");
+                return;
+            }
 
-            // Wait for the process to finish (optional)
-            //int exitCode = process.waitFor();
+            String virtualEnvActivateCommand = recorderConfig.getRootPath() + "/analyzer/venv/Scripts/activate";
+            String script = virtualEnvActivateCommand + " && python " + "./analyzer/analyzer.py " + recorderConfig.getToken() + " " + recorderConfig.getRecorderPath() + "/" + getUniqueName(recording);
+            String[] commandToExecute = new String[]{"cmd.exe", "/c", script};
+            Process p = Runtime.getRuntime().exec(commandToExecute);
 
-            // Check the exit code to determine if the process was successful
-            /*if (exitCode == 0) {
-                System.out.println("Python script executed successfully.");
-            } else {
-                System.err.println("Error executing Python script. Exit code: " + exitCode);
-            }*/
-        } catch (IOException e) {
-            logger.warning(e.getMessage());
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+            // read the output from the command
+            System.out.println("Here is the standard output of analyzer:\n");
+            String s;
+            while ((s = stdInput.readLine()) != null) {
+                System.out.println(s);
+            }
+
+            // read any errors from the attempted command
+            System.out.println("Here is the standard error of the analyzer (if any):\n");
+            while ((s = stdError.readLine()) != null) {
+                System.out.println(s);
+            }
+
+            // Close the input streams
+            stdInput.close();
+            stdError.close();
+
+            // Wait for the process to exit
+            int exitCode = p.waitFor();
+            System.out.println("Analyzer Process exited with code " + exitCode);
+        }
+        catch (IOException | InterruptedException e) {
+            System.out.println("exception happened - here's what I know: ");
+            logger.warning("Analyzer failed");
         }
     }
 

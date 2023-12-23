@@ -651,13 +651,15 @@ def join(meet_id, meet_pw, duration):
     logging.log(STATUS_LEVEL, "RECORDING")
 
     filename = os.path.join(REC_PATH, "recording-") + RECORDING_ID + ".mkv"
+    audiofile = os.path.join(REC_PATH, f"recording-{RECORDING_ID}.wav")
 
     width, height = pyautogui.size()
     resolution = str(width) + 'x' + str(height)
     disp = os.getenv('DISPLAY')
 
-    command = "ffmpeg -nostats -loglevel error -f pulse -ac 2 -i 1 -f x11grab -r 30 -s " + resolution + " -i " + \
-              disp + " -acodec pcm_s16le -vcodec libx264rgb -preset ultrafast -crf 0 -threads 0 -async 1 -vsync 1 " + filename
+    command = ("ffmpeg -nostats -loglevel error -f pulse -ac 2 -i 1 -f x11grab -r 30 -s " + resolution + " -i " + \
+              disp + " -acodec pcm_s16le -vcodec libx264rgb -preset ultrafast -crf 0 -threads 0 -async 1 -vsync 1 " + filename +
+               " -acodec pcm_s16le " + audiofile)
 
     ffmpeg = subprocess.Popen(
         command, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)

@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 
 import static ee.taltech.zoomalyzer.util.Utils.getUniqueName;
 import static ee.taltech.zoomalyzer.util.Utils.validateToken;
@@ -67,7 +69,7 @@ public class RecordingController {
         Recording recording = recordingService.findById(recordingId);
         validateToken(token, recording);
         recordingService.startAnalysis(recording);
-        return "Started";
+        return "Done";
     }
 
     @GetMapping("/download/{recordingId}")
@@ -76,7 +78,7 @@ public class RecordingController {
         Recording recording = recordingService.findById(recordingId);
         validateToken(token, recording);
         String filename = getUniqueName(recording) + recorderConfig.getFileType();
-        Path filePath = Paths.get(recorderConfig.getPath(),filename);
+        Path filePath = Paths.get(recorderConfig.getRecorderPath(),filename);
 
         Resource resource = new UrlResource(filePath.toUri());
 
@@ -95,17 +97,18 @@ public class RecordingController {
 
     @GetMapping("/download/analyze/{recordingId}")
     @CrossOrigin(origins = "*")
-    public ResponseEntity<Resource> downloadAnalysis(@PathVariable("recordingId") Long recordingId,  @RequestParam(name = "token", required = false) String token) throws MalformedURLException {
+    public ResponseEntity<Resource> downloadAnalysis(@PathVariable("recordingId") Long recordingId,  @RequestParam(name = "token", required = false) String token, @RequestParam(name = "ver", required = false) Integer version) throws IOException {
         Recording recording = recordingService.findById(recordingId);
         validateToken(token, recording);
-        String filename = getUniqueName(recording) + ".csv";
-        Path filePath = Paths.get(recorderConfig.getPath(),filename);
+        int fileVer = Objects.equals(version, 2) ? 2 : 1;
+        String filename = getUniqueName(recording) + "-" + fileVer + ".csv";
+        Path filePath = Paths.get(recorderConfig.getRecorderPath(),filename);
 
         Resource resource = new UrlResource(filePath.toUri());
 
         if (resource.exists()) {
             HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording, ".csv"));
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + generateFileName(recording, "-" + String.valueOf(fileVer) + ".csv"));
             MediaType mediaType = MediaType.parseMediaType("text/csv");
 
             return ResponseEntity.ok()
@@ -116,6 +119,7 @@ public class RecordingController {
             return ResponseEntity.notFound().build();
         }
     }
+
 
     private static String generateFileName(Recording recording, String extension) {
         return String.format("meeting-%s-%s%s", recording.getId(), TimeUtils.toIso8601(recording.getStartTime(), "Europe/Tallinn"), extension);

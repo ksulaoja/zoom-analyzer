@@ -26,23 +26,24 @@ public class Configuration {
     @Bean
     CommandLineRunner commandLineRunner(RecordingService recordingService, LogLevelDal logLevelDal, RecorderConfig recorderConfig) {
         return env -> {
+
             if (!isDockerInstalled()) {
                 throw new RuntimeException("Docker not installed");
             }
-            if (!validateRecordingDirectory(recorderConfig.getPath(), true)) {
-                throw new RuntimeException("Can't use recorder path " + recorderConfig.getPath());
+            if (!validateRecordingDirectory(recorderConfig.getRecorderPath(), true)) {
+                throw new RuntimeException("Can't use recorder path " + recorderConfig.getRecorderPath());
             }
             if (!imageExists(recorderConfig.getImage())) {
                 throw new RuntimeException("Docker image " + recorderConfig.getImage() + " is not available");
             }
 
-            /*Recording recording = new Recording();
+            Recording recording = new Recording();
             recording.setDuration(5);
-            recording.setStartTime(Instant.now().plusSeconds(10L));
-            recording.setMeetingId("https://us04web.zoom.us/j/72832721703?pwd=OalaOsXX47vCwFi3n9CmtZ6DDKu7b6.1");
+            recording.setStartTime(Instant.now().plusSeconds(100000000L));
+            recording.setMeetingId("https://us04web.zoom.us/j/79046434327?pwd=MgaoVWJVcGoyJyUJ6UVSgaTfA11aX1.1");
             recording.setMeetingPw("911647");
             recording.setUserEmail("paulbryantan@gmail.com");
-            recordingService.save(recording);*/
+            recordingService.save(recording);
 
             LogLevel info = new LogLevel("INFO");
             LogLevel debug = new LogLevel("DEBUG");
